@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Routing Desk · 任务路由台</title>
+<style>
+:root{
+  --bg:#0a0a0f; --panel:#12121a; --line:#26263a; --line2:#33334a;
+  --text:#f0f0f5; --text2:#b0b0c0; --text3:#70708a;
+  --pink:#ff4f9a; --cyan:#22d3ee; --amber:#fbbf24; --green:#34d399; --red:#f87171;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:16px; line-height:1.6;
+}
+.wrap{max-width:1100px; margin:0 auto; padding:28px 20px 80px}
+
+/* 头部 */
+.hero{display:flex; align-items:center; gap:18px; padding:20px 0 26px; border-bottom:1px solid var(--line); margin-bottom:28px}
+.hero svg{flex:0 0 auto; width:64px; height:64px}
+.hero-txt h1{margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:-.01em}
+.hero-txt p{margin:0; font-size:13px; color:var(--text3); font-family:var(--mono); letter-spacing:.06em}
+.live{margin-left:auto; display:flex; align-items:center; gap:7px; font-size:11px; font-family:var(--mono); color:var(--text3); letter-spacing:.1em}
+.live i{width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* 状态计数 */
+.counts{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:26px}
+.count{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px}
+.count b{display:block; font-size:26px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums}
+.count span{display:block; margin-top:7px; font-size:11px; color:var(--text3); font-family:var(--mono); letter-spacing:.1em}
+.count.blocked b{color:var(--red)}
+.count.ready b{color:var(--amber)}
+.count.running b{color:var(--cyan)}
+.count.done b{color:var(--green)}
+
+/* 过滤 */
+.filters{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px}
+.filters button{
+  background:var(--panel); border:1px solid var(--line); color:var(--text2);
+  font-size:13px; padding:7px 14px; border-radius:999px; cursor:pointer;
+  font-family:inherit; transition:all .15s;
+}
+.filters button:hover{border-color:var(--line2); color:var(--text)}
+.filters button.on{background:var(--pink); border-color:var(--pink); color:#fff; font-weight:700}
+
+/* 任务卡片 */
+.tasks{display:flex; flex-direction:column; gap:10px}
+.task{
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:15px 17px; border-left:3px solid var(--line2);
+}
+.task.S-BLOCKED{border-left-color:var(--red)}
+.task.S-READY{border-left-color:var(--amber)}
+.task.S-RUNNING{border-left-color:var(--cyan)}
+.task.S-DONE{border-left-color:var(--green); opacity:.72}
+
+.task-top{display:flex; align-items:flex-start; gap:11px; margin-bottom:9px}
+.task-id{font-family:var(--mono); font-size:11px; color:var(--text3); letter-spacing:.06em; padding-top:3px; flex:0 0 auto}
+.task-title{flex:1; font-size:15.5px; font-weight:600; line-height:1.45}
+.task.S-DONE .task-title{text-decoration:line-through; text-decoration-color:var(--text3)}
+.badge{flex:0 0 auto; font-family:var(--mono); font-size:10px; letter-spacing:.1em; padding:3px 9px; border-radius:4px; font-weight:700}
+.badge.S-BLOCKED{background:rgba(248,113,113,.14); color:var(--red)}
+.badge.S-READY{background:rgba(251,191,36,.14); color:var(--amber)}
+.badge.S-RUNNING{background:rgba(34,211,238,.14); color:var(--cyan)}
+.badge.S-DONE{background:rgba(52,211,153,.14); color:var(--green)}
+
+.task-meta{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 22px; font-size:13px}
+.meta-item{display:flex; gap:8px; align-items:baseline}
+.meta-k{flex:0 0 auto; font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--text3); padding-top:2px}
+.meta-v{color:var(--text2)}
+.meta-v.warn{color:var(--amber)}
+.meta-v.miss{color:var(--red)}
+.meta-v a{color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan)}
+.meta-v a:hover{color:#fff}
+
+/* 警告 */
+.warn-box{
+  display:flex; gap:10px; align-items:flex-start;
+  background:rgba(248,113,113,.07); border:1px solid rgba(248,113,113,.28);
+  border-radius:8px; padding:11px 13px; margin-top:10px; font-size:12.5px; color:#fca5a5;
+}
+.warn-box b{color:var(--red)}
+
+/* 页脚 */
+.foot{margin-top:36px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--text3); font-family:var(--mono); line-height:1.9}
+
+@media (max-width:640px){
+  .wrap{padding:20px 15px 60px}
+  body{font-size:15.5px}
+  .hero{flex-wrap:wrap; gap:12px; padding:14px 0 18px}
+  .hero svg{width:48px; height:48px}
+  .hero-txt h1{font-size:19px}
+  .live{margin-left:0; flex-basis:100%; order:3}
+  .counts{grid-template-columns:repeat(2,1fr); gap:9px}
+  .count b{font-size:22px}
+  .task-meta{grid-template-columns:1fr; gap:7px}
+  .task-title{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
+      <path d="M 13 78 L 13 54 Q 13 34 22 30 A 7 7 0 1 1 36 27 Q 43 22 50 22 Q 57 22 64 27 A 7 7 0 1 1 78 30 Q 87 34 87 54 L 87 78"
+            stroke="#ff4f9a" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="38" cy="46" r="3.4" fill="#ff4f9a"/>
+      <circle cx="62" cy="46" r="3.4" fill="#ff4f9a"/>
+      <path d="M 46.5 57 L 53.5 57 L 50 62 Z" fill="#ff4f9a"/>
+      <path d="M 26 55 L 35 58" stroke="#ff4f9a" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M 74 55 L 65 58" stroke="#ff4f9a" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>
+    <div class="hero-txt">
+      <h1>Routing Desk</h1>
+      <p>TASK ROUTING CONSOLE &middot; SINGLE FILE &middot; ZERO DEPENDENCIES</p>
+    </div>
+    <div class="live"><i></i>LIVE</div>
+  </div>
+
+  <div class="counts" id="counts"></div>
+
+  <div class="filters" id="filters">
+    <button class="on" data-f="all">ALL</button>
+    <button data-f="BLOCKED">BLOCKED</button>
+    <button data-f="READY">READY</button>
+    <button data-f="RUNNING">RUNNING</button>
+    <button data-f="DONE">DONE</button>
+  </div>
+
+  <div class="tasks" id="tasks"></div>
+
+  <div class="foot" id="foot"></div>
+
+</div>
+
+<script type="application/json" id="board-data">
+{
+  "updated": "2026-01-15T09:30:00+08:00",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Publish the v0.2 API surface",
+      "owner": "alice",
+      "boundary": "May not deprecate v0.1 endpoints - that requires a second owner's sign-off",
+      "status": "RUNNING",
+      "blocked_by": [],
+      "next_action": "Write the OpenAPI spec for the six new endpoints",
+      "evidence": ""
+    },
+    {
+      "id": "T-002",
+      "title": "Sign the data source licence",
+      "owner": "bob",
+      "boundary": "May negotiate terms; may not commit to a price without finance review",
+      "status": "BLOCKED",
+      "blocked_by": ["T-004"],
+      "next_action": "Send the redlined agreement to the counterparty",
+      "evidence": ""
+    },
+    {
+      "id": "T-003",
+      "title": "Extract source from the cloud environment",
+      "owner": "agent-architect",
+      "boundary": "Read-only on production; may not touch live data or credentials",
+      "status": "READY",
+      "blocked_by": [],
+      "next_action": "List every module currently running and map it to a target path",
+      "evidence": ""
+    },
+    {
+      "id": "T-004",
+      "title": "Approve Q1 infrastructure budget",
+      "owner": "carol",
+      "boundary": "May approve up to the pre-agreed ceiling; anything above goes to the board",
+      "status": "DONE",
+      "blocked_by": [],
+      "next_action": "",
+      "evidence": "https://example.com/decisions/q1-infra"
+    },
+    {
+      "id": "T-005",
+      "title": "Write the migration guide",
+      "owner": "alice",
+      "boundary": "Documentation only - may not change code in the same change",
+      "status": "BLOCKED",
+      "blocked_by": ["T-001"],
+      "next_action": "Wait for the spec to freeze, then start from the endpoint table",
+      "evidence": ""
+    },
+    {
+      "id": "T-006",
+      "title": "Third-party security review",
+      "owner": "",
+      "boundary": "",
+      "status": "BLOCKED",
+      "blocked_by": ["T-003"],
+      "next_action": "Pick a vendor and get two quotes",
+      "evidence": ""
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  var STATUS = ["BLOCKED", "READY", "RUNNING", "DONE"];
+  var REQUIRED = ["id", "title", "owner", "boundary", "status", "next_action"];
+  var board = { updated: "", tasks: [] };
+  var filter = "all";
+
+  function readInline() {
+    var el = document.getElementById("board-data");
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) {
+      console.error("Inline board data is not valid JSON:", e);
+      return null;
+    }
+  }
+
+  function loadBoard() {
+    var params = new URLSearchParams(location.search);
+    var url = params.get("data");
+    if (!url) return Promise.resolve(readInline());
+
+    return fetch(url, { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status + " reading " + url);
+        return r.json();
+      })
+      .catch(function (e) {
+        console.error("Remote board failed:", e);
+        var fallback = readInline();
+        if (fallback) fallback._loadError = String(e.message || e);
+        return fallback;
+      });
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+
+  function missingFields(t) {
+    return REQUIRED.filter(function (k) {
+      return !t[k] || String(t[k]).trim() === "";
+    });
+  }
+
+  function renderCounts() {
+    document.getElementById("counts").innerHTML = STATUS.map(function (s) {
+      var n = board.tasks.filter(function (t) { return t.status === s; }).length;
+      return '<div class="count ' + s.toLowerCase() + '"><b>' + n + '</b><span>' + s + '</span></div>';
+    }).join("");
+  }
+
+  function renderTask(t) {
+    var miss = missingFields(t);
+    var owner = t.owner ? esc(t.owner) : '<span class="meta-v miss">unassigned</span>';
+    var boundary = t.boundary ? esc(t.boundary) : '<span class="meta-v miss">not stated</span>';
+    var next = t.next_action ? esc(t.next_action) : '<span class="meta-v miss">not stated</span>';
+    var blocked = (t.blocked_by && t.blocked_by.length)
+      ? '<span class="meta-v warn">' + t.blocked_by.map(esc).join(", ") + "</span>"
+      : '<span class="meta-v">&mdash;</span>';
+    var evidence = t.evidence
+      ? '<a href="' + esc(t.evidence) + '" target="_blank" rel="noopener">evidence &nearr;</a>'
+      : '<span class="meta-v">&mdash;</span>';
+    var warn = miss.length
+      ? '<div class="warn-box"><b>Incomplete</b><span>Missing: ' + miss.map(esc).join(", ") + "</span></div>"
+      : "";
+
+    return '<div class="task S-' + esc(t.status) + '">' +
+      '<div class="task-top">' +
+        '<span class="task-id">' + esc(t.id || "—") + "</span>" +
+        '<span class="task-title">' + esc(t.title || "(untitled)") + "</span>" +
+        '<span class="badge S-' + esc(t.status) + '">' + esc(t.status) + "</span>" +
+      "</div>" +
+      '<div class="task-meta">' +
+        '<div class="meta-item"><span class="meta-k">OWNER</span><span class="meta-v">' + owner + "</span></div>" +
+        '<div class="meta-item"><span class="meta-k">BOUNDARY</span><span class="meta-v">' + boundary + "</span></div>" +
+        '<div class="meta-item"><span class="meta-k">BLOCKED BY</span>' + blocked + "</div>" +
+        '<div class="meta-item"><span class="meta-k">NEXT</span><span class="meta-v">' + next + "</span></div>" +
+        '<div class="meta-item"><span class="meta-k">EVIDENCE</span>' + evidence + "</div>" +
+      "</div>" + warn +
+    "</div>";
+  }
+
+  function renderTasks() {
+    var arr = filter === "all" ? board.tasks : board.tasks.filter(function (t) { return t.status === filter; });
+    document.getElementById("tasks").innerHTML = arr.length
+      ? arr.map(renderTask).join("")
+      : '<div class="task"><div class="task-title" style="color:var(--text3)">No tasks with this status.</div></div>';
+  }
+
+  function renderFoot() {
+    var n = board.tasks.length;
+    var html = "UPDATED " + esc(board.updated || "unknown") + " &middot; " + n + " TASK" +
+               (n === 1 ? "" : "S") + " &middot; ROUTING DESK v0.1.0 &middot; MIT";
+    if (board._loadError) {
+      html += '<br><span style="color:var(--amber)">&#9888; Remote load failed (' +
+              esc(board._loadError) + ") &mdash; showing inline data.</span>";
+    }
+    document.getElementById("foot").innerHTML = html;
+  }
+
+  function renderAll() { renderCounts(); renderTasks(); renderFoot(); }
+
+  document.getElementById("filters").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-f]");
+    if (!btn) return;
+    filter = btn.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (b) {
+      b.classList.toggle("on", b === btn);
+    });
+    renderTasks();
+  });
+
+  loadBoard().then(function (data) {
+    board = (data && Array.isArray(data.tasks)) ? data : { updated: "", tasks: [] };
+    board.tasks = board.tasks.filter(function (t) {
+      if (STATUS.indexOf(t.status) === -1) {
+        console.warn("Unknown status, dropped:", t.id, t.status);
+        return false;
+      }
+      return true;
+    });
+    renderAll();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+  "updated": "2026-01-15T09:30:00+08:00",
+  "_note": "Example board. Replace every task with your own. Every field is required — a task missing boundary or next_action will render with a visible warning.",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Publish the v0.2 API surface",
+      "owner": "alice",
+      "boundary": "May not deprecate v0.1 endpoints — that requires a second owner's sign-off",
+      "status": "RUNNING",
+      "blocked_by": [],
+      "next_action": "Write the OpenAPI spec for the six new endpoints",
+      "evidence": ""
+    },
+    {
+      "id": "T-002",
+      "title": "Sign the data source licence",
+      "owner": "bob",
+      "boundary": "May negotiate terms; may not commit to a price without finance review",
+      "status": "BLOCKED",
+      "blocked_by": ["T-004"],
+      "next_action": "Send the redlined agreement to the counterparty",
+      "evidence": ""
+    },
+    {
+      "id": "T-003",
+      "title": "Extract source from the cloud environment",
+      "owner": "agent-architect",
+      "boundary": "Read-only on production; may not touch live data or credentials",
+      "status": "READY",
+      "blocked_by": [],
+      "next_action": "List every module currently running and map it to a target path",
+      "evidence": ""
+    },
+    {
+      "id": "T-004",
+      "title": "Approve Q1 infrastructure budget",
+      "owner": "carol",
+      "boundary": "May approve up to the pre-agreed ceiling; anything above goes to the board",
+      "status": "DONE",
+      "blocked_by": [],
+      "next_action": "",
+      "evidence": "https://example.com/decisions/q1-infra"
+    },
+    {
+      "id": "T-005",
+      "title": "Write the migration guide",
+      "owner": "alice",
+      "boundary": "Documentation only — may not change code in the same change",
+      "status": "BLOCKED",
+      "blocked_by": ["T-001"],
+      "next_action": "Wait for the spec to freeze, then start from the endpoint table",
+      "evidence": ""
+    },
+    {
+      "id": "T-006",
+      "title": "Third-party security review",
+      "owner": "unassigned",
+      "boundary": "",
+      "status": "BLOCKED",
+      "blocked_by": ["T-003"],
+      "next_action": "Pick a vendor and get two quotes",
+      "evidence": ""
+    }
+  ]
+}
